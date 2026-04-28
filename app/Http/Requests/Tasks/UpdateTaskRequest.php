@@ -25,9 +25,9 @@ class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['string', 'max:255'],
-            'description' => ['text'],
-            'status' => [new Enum(StatusEnum::class) ],
+            'title' => ['sometimes', 'string', 'max:255'],
+            'description' => ['sometimes', 'text'],
+            'status' => ['sometimes', new Enum(StatusEnum::class)],
         ];
     }
 }

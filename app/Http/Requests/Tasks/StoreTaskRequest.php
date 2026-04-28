@@ -26,9 +26,9 @@ class StoreTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['string', 'max:255'],
-            'description' => ['text'],
-            'status' => [new Enum(StatusEnum::class) ],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'status' => [new Enum(StatusEnum::class)],
         ];
     }
 }
