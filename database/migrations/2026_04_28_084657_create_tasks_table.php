@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->string('title', 255);
             $table->text('description');
-            $table->enum('status', StatusEnum::cases());
+            $table->enum('status', StatusEnum::cases())->default(StatusEnum::PENDING->value);
             $table->timestamps();
             $table->softDeletes();
         });
