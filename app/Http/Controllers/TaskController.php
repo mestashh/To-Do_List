@@ -6,11 +6,12 @@ use App\Http\Requests\Tasks\StoreTaskRequest;
 use App\Http\Requests\Tasks\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Services\TaskService;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function __construct(){
+    public function __construct( private readonly TaskService $taskService){
         $this->authorizeResource(Task::class, 'task');
     }
     /**
@@ -28,14 +29,7 @@ class TaskController extends Controller
      */
     public function store(StoreTaskRequest $request)
     {
-        $data = $request->validated();
-
-        $task = Task::create([
-            'user_id' => $request->user()->id,
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'status' => $data['status'],
-        ]);
+        $task = $this->taskService->store($request);
 
         return new TaskResource($task);
     }
