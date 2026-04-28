@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $description
  * @property mixed $status
  * @property mixed $user
+ * @property mixed $user_id
  */
 class TaskResource extends JsonResource
 {
@@ -22,7 +23,7 @@ class TaskResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'user_id' => $this->user->id,
+            'user_id' => $this->user_id,
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,

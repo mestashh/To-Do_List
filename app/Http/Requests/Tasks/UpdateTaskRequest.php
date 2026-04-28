@@ -26,7 +26,7 @@ class UpdateTaskRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'text'],
+            'description' => ['sometimes', 'string'],
             'status' => ['sometimes', new Enum(StatusEnum::class)],
         ];
     }

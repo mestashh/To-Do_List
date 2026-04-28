@@ -102,4 +102,104 @@ class TaskTest extends TestCase
 
         $request->assertStatus(401);
     }
+
+    #[Test]
+    public function user_can_create_task(): void
+    {
+        $user = User::factory()->create();
+
+        $request = $this->actingAs($user)->postJson("api/v1/tasks/", [
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+
+        $request->assertStatus(201);
+
+        $this->assertDatabaseHas('tasks', [
+            'user_id' => $user->id,
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+    }
+
+    #[Test]
+    public function user_can_update_task(): void
+    {
+        $user = User::factory()->create();
+
+        $task = Task::create([
+            'user_id' => $user->id,
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+        $request = $this->actingAs($user)->putJson("api/v1/tasks/{$task->id}", [
+            'title' => 'Test2',
+            'description' => 'Test2',
+            'status' => StatusEnum::DONE->value,
+        ]);
+
+        $request->assertStatus(200);
+
+        $this->assertDatabaseHas('tasks', [
+            'user_id' => $user->id,
+            'title' => 'Test2',
+            'description' => 'Test2',
+            'status' => StatusEnum::DONE->value,
+        ]);
+    }
+
+    #[Test]
+    public function user_cannot_update_not_his_task(): void
+    {
+        $user = User::factory()->create();
+
+        $task = Task::create([
+            'user_id' => User::factory()->create()->id,
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+        $request = $this->actingAs($user)->putJson("api/v1/tasks/{$task->id}", [
+            'title' => 'Test2',
+            'description' => 'Test2',
+            'status' => StatusEnum::DONE->value,
+        ]);
+
+        $request->assertStatus(403);
+    }
+
+    #[Test]
+    public function user_can_delete_task(): void
+    {
+        $user = User::factory()->create();
+
+        $task = Task::create([
+            'user_id' => $user->id,
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+        $request = $this->actingAs($user)->deleteJson("api/v1/tasks/{$task->id}");
+
+        $request->assertStatus(204);
+    }
+
+    #[Test]
+    public function user_cannot_delete_not_his_task(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::create([
+            'user_id' => User::factory()->create()->id,
+            'title' => 'Test',
+            'description' => 'Test',
+            'status' => StatusEnum::PENDING->value,
+        ]);
+        $request = $this->actingAs($user)->deleteJson("api/v1/tasks/{$task->id}");
+
+        $request->assertStatus(403);
+    }
+
 }

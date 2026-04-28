@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property mixed $user
+ * @property mixed $user_id
  * @method static create(array $array)
  */
 class Task extends Model
