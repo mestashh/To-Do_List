@@ -1,58 +1,249 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# To-Do List REST API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+REST API для управления списком задач (To-Do List), реализованный на PHP 8.3 / Laravel 13.
 
-## About Laravel
+Каждая задача принадлежит конкретному пользователю — для работы с `/tasks` требуется аутентификация по Bearer-токену (Laravel Sanctum).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Стек
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3
+- Laravel 13
+- Laravel Sanctum 4 (токены API)
+- PHPUnit 12
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
+---
+## Установка
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+./setup.sh
+php artisan migrate
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+API будет доступен по адресу `http://127.0.0.1:8000/api/v1`.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Аутентификация
 
-## Code of Conduct
+API использует **Bearer-токен** через Laravel Sanctum.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Зарегистрировать пользователя (`POST /api/v1/registration`).
+2. Получить токен (`POST /api/v1/authorization`).
+3. Передавать токен в заголовке каждого запроса к `/tasks`:
 
-## Security Vulnerabilities
+```
+Authorization: Bearer <token>
+Accept: application/json
+Content-type: application/json
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Эндпоинты
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Базовый путь: `/api/v1`
+
+### Auth
+
+| Метод | URL              | Описание                             | Auth |
+|-------|------------------|--------------------------------------|------|
+| POST  | `/registration`  | Регистрация нового пользователя      | —    |
+| POST  | `/authorization` | Получение Bearer-токена              | —    |
+
+### Tasks
+
+Пользователь видит и изменяет только свои задачи. Чужие задачи возвращают `403 Forbidden`.
+
+---
+
+## Примеры запросов
+
+### Регистрация
+
+```http
+POST /api/v1/registration
+Content-Type: application/json
+Accept: Application/json
+
+{
+  "name": "Name",
+  "email": "email@example.com",
+  "password": "password"
+}
+```
+
+Ответ `201`:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "Name",
+    "email": "email@example.com"
+  }
+}
+```
+
+### Получение токена
+
+```http
+POST /api/v1/authorization
+Content-Type: application/json
+Accept: Application/json
+
+{
+  "email": "email@example.com",
+  "password": "password"
+}
+```
+
+Ответ `200`:
+
+```json
+{
+  "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "token_type": "Bearer"
+}
+```
+
+### Создание задачи
+
+```http
+POST /api/v1/tasks
+Authorization: Bearer <token>
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Сделать задание",
+  "description": "До января",
+  "status": "pending"
+}
+```
+
+Ответ `201`:
+
+```json
+{
+  "data": {
+    "user_id": 1,
+    "id": 1,
+    "title": "Сделать задание",
+    "description": "До января",
+    "status": "pending"
+  }
+}
+```
+
+### Список задач
+
+```http
+GET /api/v1/tasks
+Authorization: Bearer <token>
+Content-Type: application/json
+Accept: application/json
+```
+
+Ответ `200` — стандартный paginated-ответ Laravel Resource Collection (`data`, `links`, `meta`).
+
+### Получение одной задачи
+
+```http
+GET /api/v1/tasks/1
+Authorization: Bearer <token>
+Accept: application/json
+Content-Type: application/json
+```
+
+### Обновление
+
+```http
+PUT /api/v1/tasks/1
+Authorization: Bearer <token>
+Content-Type: application/json
+Content-Type: application/json
+
+{
+  "title": "Сделать задачу до января",
+  "status": "done"
+}
+```
+
+`UpdateTaskRequest` использует правило `sometimes`, поэтому передавать можно только изменяемые поля.
+
+### Удаление
+
+```http
+DELETE /api/v1/tasks/1
+Authorization: Bearer <token>
+Content-Type: application/json
+Content-Type: application/json
+```
+
+Ответ `204 No Content`.
+
+---
+
+## Валидация
+
+### `POST /tasks`
+
+| Поле          | Правила                                              |
+|---------------|------------------------------------------------------|
+| `title`       | required, string, max:255                            |
+| `description` | required, string                                     |
+| `status`      | enum: `done` \| `missed` \| `pending`                |
+
+### `PUT /tasks/{id}`
+
+Все поля опциональны (`sometimes`), но если переданы — валидируются по тем же правилам.
+
+### `POST /registration`
+
+| Поле       | Правила                          |
+|------------|----------------------------------|
+| `name`     | required, string, max:255        |
+| `email`    | required, unique:users,email     |
+| `password` | required, string, max:50         |
+
+## Тесты
+
+Покрытие — feature-тесты на CRUD задач и аутентификацию (`tests/Feature/TaskTest.php`).
+
+```bash
+php artisan test
+```
+
+Тесты используют `RefreshDatabase`, поэтому требуется доступ к тестовой БД (для MySQL — отдельная БД, либо переключиться на SQLite в `phpunit.xml`).
+
+Покрываемые сценарии:
+- регистрация и получение токена;
+- гость не может выполнять CRUD над задачами (`401`);
+- авторизованный пользователь может создавать / обновлять / удалять свои задачи;
+- пользователь не может изменять или удалять чужие задачи (`403`).
+
+---
+
+## Структура БД
+
+### `users`
+
+Стандартная таблица Laravel + Sanctum (`name`, `email`, `password`, ...).
+
+### `tasks`
+
+| Поле          | Тип               | Примечание                          |
+|---------------|-------------------|-------------------------------------|
+| `id`          | bigint, PK        |                                     |
+| `user_id`     | foreignId → users | restrictOnDelete                    |
+| `title`       | string(255)       |                                     |
+| `description` | text              |                                     |
+| `status`      | enum              | `done`, `missed`, `pending` (default: pending) |
+| timestamps    | created/updated   |                                     |
+| `deleted_at`  | soft delete       |                                     |
+
+### `personal_access_tokens`
+
+Стандартная таблица Sanctum.
